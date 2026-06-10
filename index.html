@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LabelCheck AI v23 Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Take-Home Prototype</p>
+      <h1>LabelCheck AI v23</h1>
+      <p class="subtitle">Alcohol label verification assistant for routine compliance checks.</p>
+      <p class="subtitle small">Simple workflow: Single Review keeps one application uncluttered. Batch Processing is separated into its own tab.</p>
+    </div>
+    <div class="status-pill" id="runtimeStatus">Local-first mode</div>
+  </header>
+
+  <nav class="mode-tabs" aria-label="Operation mode">
+    <button type="button" id="singleModeTab" class="mode-tab active">Single Review</button>
+    <button type="button" id="batchModeTab" class="mode-tab">Batch Processing</button>
+  </nav>
+
+  <main class="layout">
+    <div id="singleModePanel" class="mode-panel active">
+    <section class="card input-card">
+      <h2>1. Applicant statement import</h2>
+      <p class="hint">Start here. Upload the applicant's TTB F 5100.31 PDF, email, TXT, CSV, or JSON. The app reads the submitted PDF package as visible/textual evidence when possible, then fills reviewer-editable fields below.</p>
+      <div class="helper-box"><strong>Agent tip:</strong> Upload the application first, then upload or paste the label evidence. The green/yellow/red checks at the bottom are the simple agent view.</div>
+      <div class="upload-zone">
+        <input type="file" id="applicationFile" accept=".txt,.csv,.json,.eml,.pdf,text/plain,text/csv,application/json,message/rfc822,application/pdf" />
+        <button id="loadApplicationFileBtn" type="button">Load Applicant File</button>
+        <span id="applicationImportStatus" class="hint"></span>
+      </div>
+      <label class="wide-label">Paste applicant email, form text, JSON, or CSV row
+        <textarea id="applicationPaste" rows="8" placeholder="Example:
+Brand Name: OLD TOM DISTILLERY
+Product Name: Tennessee Whiskey
+Alcohol Type: Whiskey
+Alcohol Content: 45% Alc./Vol. (90 Proof)
+Net Contents: 750 mL"></textarea>
+      </label>
+      <div class="actions">
+        <button id="parseApplicationBtn" type="button" class="primary">Re-parse / Fill Expected Fields</button>
+        <button id="clearApplicationBtn" type="button">Clear Import Text</button>
+        <button id="loadTtbTemplateBtn" type="button">Load TTB F 5100.31 Field Map</button>
+      </div>
+      <details class="normalized-panel">
+        <summary>Show technical extraction details</summary>
+        <p class="hint">For troubleshooting only. The editable fields in Section 2 are what the reviewer uses.</p>
+        <pre id="ttbExtractionOutput">No TTB application loaded.</pre>
+      </details>
+    </section>
+
+    <section class="card input-card">
+      <h2>2. Application fields found</h2>
+      <p class="hint">These are reviewer-editable. The app reads the uploaded application visually/textually when possible and fills the fields it can find. Blank fields mean the application did not provide that value or the app could not read it.</p>
+      <div class="form-grid">
+        <label>Brand Name
+          <input id="expectedBrand" placeholder="From TTB Item 6 or applicant export" />
+        </label>
+        <label>Product Name
+          <input id="expectedProduct" placeholder="From TTB Item 7 or applicant export" />
+        </label>
+        <label>Alcohol Type <span class="optional">optional</span>
+          <input id="expectedAlcoholType" placeholder="Optional, e.g., Whiskey, Wine, Beer, Spirits" />
+        </label>
+        <label>Expected Alcohol Content <span class="optional">optional</span>
+          <input id="expectedAbv" placeholder="Leave blank if not supplied by the application" />
+        </label>
+        <label>Expected Net Contents <span class="optional">optional</span>
+          <input id="expectedNet" placeholder="Leave blank if not supplied by the application" />
+        </label>
+      </div>
+      <label class="wide-label">Expected Government Warning <span class="optional">optional</span>
+        <textarea id="expectedWarning" rows="3" placeholder="Usually leave blank. The app uses the standard TTB warning automatically and reports Warning Present and Warning Accurate as Y/N."></textarea>
+      </label>
+      <div class="helper-box small-helper"><strong>Simple fields:</strong> Alcohol content, warning presence, and warning accuracy are shown as Y/N checks after verification so agents do not need to interpret long text fields.</div>
+    </section>
+
+    <section class="card input-card">
+      <h2>3. Label evidence</h2>
+      <p class="hint">Upload the label image or paste label text. A front label may not contain the Government Warning. The app now distinguishes “not visible on this image” from “missing from the entire submitted label package.”</p>
+      <div class="helper-box small-helper"><strong>Package check:</strong> If only a front label is supplied and the warning is not visible, Warning Present will show Review, not automatic No. Upload/paste any back or side label text to confirm the package warning.</div>
+      <div class="upload-zone">
+        <input type="file" id="labelImage" accept="image/*" />
+        <button id="runOcrBtn" type="button">Try OCR from image</button>
+        <span id="ocrStatus" class="hint"></span>
+      </div>
+      <label class="wide-label">Detected or pasted label text / OCR raw output
+        <textarea id="labelText" rows="10" placeholder="Paste label text here, or upload a label image and click Try OCR from image."></textarea>
+      </label>
+      <div class="actions">
+        <button id="verifyBtn" type="button" class="primary">Verify Label</button>
+        <button id="samplePassBtn" type="button">Load Passing Sample</button>
+        <button id="sampleFailBtn" type="button">Load Failing Sample</button>
+      </div>
+      <div class="quick-check-panel" aria-live="polite">
+        <h3>Simple Y/N results</h3>
+        <p class="hint">These boxes populate after verification and are designed for fast review.</p>
+        <div class="quick-check-grid">
+          <div class="quick-check"><span>Alcohol content matches</span><strong id="qcAlcohol">--</strong></div>
+          <div class="quick-check"><span>Net contents present on label</span><strong id="qcNet">--</strong></div>
+          <div class="quick-check"><span>Warning present in package</span><strong id="qcWarningPresent">--</strong></div>
+          <div class="quick-check"><span>Warning text accurate</span><strong id="qcWarningAccurate">--</strong></div>
+        </div>
+      </div>
+      <div class="normalized-panel">
+        <h3>What the app read from the label</h3>
+        <p class="hint">Plain-English values extracted from the label image or pasted label text.</p>
+        <pre id="normalizedOutput">Run verification to see normalized fields.</pre>
+      </div>
+    </section>
+
+    <section class="card results-card">
+      <div class="results-header">
+        <div>
+          <h2>Verification report</h2>
+          <p id="summaryText" class="hint">Run verification to see results.</p>
+        </div>
+        <div class="score" id="scoreBox">--</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Application / Requirement</th>
+            <th>Label Result</th>
+            <th>Y/N/Review</th>
+            <th>Confidence</th>
+            <th>Agent Note</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </section>
+
+    </div>
+
+    <div id="batchModePanel" class="mode-panel">
+    <section class="card input-card">
+      <h2>Batch application PDF extraction</h2>
+      <p class="hint">Upload multiple electronically filled TTB F 5100.31 PDFs to extract application metadata into a batch CSV. ABV, net contents, and warning columns stay blank unless supplied by a separate applicant export/specification.</p>
+      <div class="upload-zone">
+        <input type="file" id="batchApplicationFiles" accept=".pdf,application/pdf" multiple />
+        <button id="extractBatchApplicationsBtn" type="button" class="primary">Extract PDFs to Batch CSV</button>
+        <button id="downloadApplicationCsvBtn" type="button">Download Application CSV</button>
+        <span id="batchApplicationStatus" class="hint"></span>
+      </div>
+      <label class="wide-label">Extracted application CSV
+        <textarea id="applicationBatchCsv" rows="8" placeholder="Upload filled TTB F 5100.31 PDF forms, then click Extract PDFs to Batch CSV."></textarea>
+      </label>
+      <div class="actions">
+        <button id="copyApplicationCsvToBatchBtn" type="button">Copy to Batch Verification</button>
+      </div>
+      <div id="applicationBatchPreview"></div>
+    </section>
+
+    <section class="card input-card">
+      <h2>Batch verification</h2>
+      <p class="hint">Paste CSV rows with headers: brand,productName,alcoholType,abv,netContents,labelText. This supports importer-style bulk review without COLA integration.</p>
+      <textarea id="batchCsv" rows="7">brand,productName,alcoholType,abv,netContents,labelText
+OLD TOM DISTILLERY,Small Batch Reserve,Whiskey,45% Alc./Vol. (90 Proof),750 mL,"OLD TOM DISTILLERY Small Batch Reserve Tennessee Whiskey 45% Alc./Vol. (90 Proof) 750 mL GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+STONE'S THROW,Limited Release,Whiskey,46% Alc./Vol.,750 mL,"Stone's Throw Limited Release American Single Malt Whiskey 46% Alc./Vol. 750 mL Government Warning: malformed text"</textarea>
+      <div class="actions">
+        <button id="batchBtn" type="button" class="primary">Run Batch</button>
+        <button id="downloadBtn" type="button">Download CSV Report</button>
+      </div>
+      <div id="batchOutput"></div>
+    </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Prototype only. Supports human-in-the-loop review and does not make legal approval decisions. Review flags mean “check the submitted label package,” not automatic rejection.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "labelcheck-ai-prototype",
+  "version": "1.0.0",
+  "description": "Standalone alcohol label verification prototype for routine compliance checks.",
+  "scripts": {
+    "start": "python -m http.server 8000"
+  },
+  "keywords": ["compliance", "ocr", "label-verification", "prototype"],
+  "license": "MIT"
+}
