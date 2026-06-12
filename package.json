@@ -1,10 +1,19 @@
 {
   "name": "labelcheck-ai-prototype",
-  "version": "1.0.0",
-  "description": "Standalone alcohol label verification prototype for routine compliance checks.",
+  "version": "1.0.25",
+  "description": "Offline-capable alcohol label verification prototype with local Tesseract.js OCR support, TTB F 5100.31 parsing, batch CSV review, and human-in-the-loop Y/N compliance checks.",
   "scripts": {
     "start": "python -m http.server 8000"
   },
-  "keywords": ["compliance", "ocr", "label-verification", "prototype"],
+  "keywords": [
+    "compliance",
+    "ocr",
+    "label-verification",
+    "prototype",
+    "ttb",
+    "offline-first",
+    "tesseract-js",
+    "human-in-the-loop"
+  ],
   "license": "MIT"
 }
