@@ -1,0 +1,21 @@
+This is my Label Check AI app v.25
+
+
+I created the app to be a versatile office automation tool. The basic function of the app is to read text applicant inputs then, then compare them against submitted label files. Having verified that what the applicant claims they submitted matches the image they submitted, the app then evaluates the submission against TTB regulations. 
+
+I added features designed to make the app more efficient for the reviewers: 
+
+1. Input to be extracted directly from the TTB F 5100.31 (04/2023) form, adding this feature ensured repeatable formatting so the app or user will not have to sift through email or other mediums for the desired information, then reorganize it into something the app can read. There is a provision that allows for manual input or copy and paste input as a backup.
+
+2. There is a batch upload feature which converts selected applications to csvs then will evaluate the batch for errors. I have only tested 3 pdfs in the batch evaluation mode because I only created 3 test applications and labels.
+
+3. The app allows the evaluator to work solely from the application form or from a combination of the label image and the pdf application. Depending on the legibility of the label (early versions of the app struggled with the Jack Daniel’s label), user may need to try adding the image file if the image in the pdf is not transmitted with sufficient resolution for the system to scan it.
+
+4. Offline capability via offline Tesseract.js if the browser bundle is vendored locally. Current OCR uses Tesseract.recognize(file, "eng"), and the previous package loaded Tesseract.js from a CDN.
+
+
+
+Troubleshooting Notes:
+1.	Some labels with fancy, hard to read fonts will flag as missing elements because the app cannot identify and verify the presence of all required elements. This issue is less a programming glitch and more the limit of the technology used to identify objects. Essentially, some of the more intricate labels will require additional human verification.
+
+2.	When creating the test labels for the app I was unable to source label images with both the volume and the warning. I told the system to flag the USG warning if it was absent or if it was incorrectly written. I couldn’t source the Jack Daniel’s label with the legible warning and capacity online. When I attempted to photoshop the warning and capacity in, the app had errors detecting it as it was a departure from the rest of the label style wise. In the case of real labels, this doesn’t appear to be an issue. I attributed the lack of capacity (volume) on the labels available online to manufacturers needing a base template they can scale for bottle size. 

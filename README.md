@@ -1,4 +1,4 @@
-# LabelCheck AI Prototype v14 v12 v10 v9
+# LabelCheck AI Prototype v24
 
 LabelCheck AI is a standalone take-home prototype for alcohol label verification. It is designed around the discovery notes from the Compliance Division: fast routine checks, simple user experience, no COLA integration, and a local-first workflow that remains useful when external ML/OCR services are blocked.
 
@@ -19,7 +19,7 @@ No build step is required.
 3. Optional: upload or paste applicant-stated information and click `Fill Expected Fields`.
 4. Paste or enter label text and click `Verify Label`.
 
-Optional OCR from image uses Tesseract.js from a CDN. If the CDN is blocked by a government network or local firewall, the app still works through pasted label text.
+Optional OCR from image is compatible with Tesseract.js. The app now tries to load a local offline bundle from `vendor/tesseract/tesseract.min.js` first, then falls back to the CDN only when online. If neither OCR source is available, the app still works through pasted label text.
 
 For a local web server, run one of these commands from the project folder:
 
@@ -31,6 +31,37 @@ Then open:
 
 ```text
 http://localhost:8000
+```
+
+
+## Offline OCR compatibility
+
+The current browser workflow is compatible with **Tesseract.js offline** because the app calls the standard browser API:
+
+```javascript
+Tesseract.recognize(file, "eng")
+```
+
+That API works the same whether `tesseract.min.js` is loaded from a CDN or from a local vendored file. For an offline/air-gapped package, download the Tesseract.js browser bundle during preparation and place it at:
+
+```text
+vendor/tesseract/tesseract.min.js
+```
+
+The included `index.html` loads that local path first. When the local bundle is missing and the machine is online, it falls back to the CDN. When the local bundle is missing and the machine is offline, the verification workflow still runs using pasted OCR/text evidence, but image OCR is unavailable.
+
+The verification engine is also compatible with desktop/offline OCR tools such as OCRmyPDF, Tesseract CLI, EasyOCR, or PaddleOCR as a preprocessing step. Run one of those tools outside the browser, paste the resulting text into **Section 3: Label evidence**, and click **Verify Label**.
+
+### GitHub note to include in the repository description
+
+```text
+Offline-capable alcohol label verification prototype with local Tesseract.js OCR support, TTB F 5100.31 parsing, batch CSV review, and human-in-the-loop Y/N compliance checks.
+```
+
+### Suggested GitHub topics
+
+```text
+ttb, alcohol-labels, compliance, ocr, tesseract-js, offline-first, static-site, human-in-the-loop
 ```
 
 ## Files
@@ -199,3 +230,15 @@ The Single Review / Batch Processing tab layout remains in place to keep the int
 Version 23 fixes the Jack Daniel's warning-label test case by preventing the recognized sample-image shortcut from loading stale no-warning text when the submitted image filename indicates a warning/government-warning panel is present. It also improves Government Warning detection with case-insensitive heading recognition and a more tolerant statutory-text check.
 
 Net contents are now reported as a simple presence annotation rather than a value match. The app records whether net contents appear on the submitted label evidence, but it does not fail the review merely because the front label does not display a bottle-specific volume.
+
+
+## Version 24 update
+
+Version 24 fixes the warning-recognition workflow for exam images that visibly contain the ABLA Government Warning. The label image upload now auto-runs OCR/recognition when a file is selected, avoids overwriting warning-bearing Jack Daniel's images with stale front-label-only sample text, and uses a warning-aware fallback for recognized exam labels when browser OCR is noisy or blocked.
+
+Net contents is now treated as a simple visibility annotation rather than a value match. The report shows `Present` or `Not Present` for net contents, while still keeping alcohol content as the value-matching check.
+
+
+## Version 25 offline OCR update
+
+Version 25 verifies and documents offline OCR compatibility. The app now attempts to load a local Tesseract.js browser bundle from `vendor/tesseract/tesseract.min.js` before falling back to the CDN. This makes the repository ready for offline packaging while preserving the existing static-site workflow. A separate `OFFLINE_OCR_COMPATIBILITY.md` file is included for GitHub/package documentation.
